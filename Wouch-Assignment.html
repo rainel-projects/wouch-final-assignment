@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Emotional Safety Engine — Weighted Psychology Model</title>
+
+<!-- 
+  USING INTER FONT 
+  The entire UI is built around a soft, clean Apple-style aesthetic.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================
+   ROOT THEME VARIABLES — MODIFY COLORS & GLOWS HERE
+   These values control the soft-blue therapy theme.
+=========================================================== */
+:root {
+  --bg: #07182e;
+  --card-start: rgba(40,90,140,0.92);
+  --card-end: rgba(8,34,64,0.92);
+  --accent1: #4cc9f0;
+  --accent2: #72e4ff;
+  --glass: rgba(255,255,255,0.12);
+}
+
+/* ===========================
+   GLOBAL RESETS
+=========================== */
+* { box-sizing:border-box; }
+html, body { height:100%; }
+
+body {
+  margin:0;
+  background: radial-gradient(circle at 20% 20%, #0c3556, #07182e 60%, #020614 100%);
+  font-family:'Inter',sans-serif;
+  color:white;
+  display:flex;align-items:center;justify-content:center;
+  padding:2rem;
+  overflow:hidden;
+}
+
+/* ===========================================================
+   MAIN CONTAINER
+   80rem × 80rem "flat canvas" — NOT a mobile mock frame.
+   The app lives directly on the page (Option A + B theme).
+=========================================================== */
+.phone {
+  width:80rem;
+  height:80rem;
+  max-width:95vw;
+  max-height:95vh;
+  padding:36px;
+  border-radius:40px;
+  background:linear-gradient(180deg,var(--card-start),var(--card-end));
+  box-shadow:0 30px 80px rgba(0,0,0,0.55);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+
+  /* therapeutic floating animation */
+  animation:float 6s ease-in-out alternate infinite;
+}
+
+@keyframes float {
+  0%{transform:translateY(0)}
+  100%{transform:translateY(-10px);}
+}
+
+
+/* ===========================================================
+   HEADER (Logo + Title)
+=========================================================== */
+.header { display:flex;gap:20px;align-items:center; }
+.logo {
+  width:70px;height:70px;border-radius:16px;
+  background:rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;
+}
+.title h1 { margin:0;font-size:28px;font-weight:600; }
+
+
+/* ===========================================================
+   PROGRESS BAR
+=========================================================== */
+.progressWrap { margin-top:20px; }
+.progress {
+  height:14px;border-radius:999px;overflow:hidden;
+  background:rgba(255,255,255,0.08);
+}
+.bar {
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--accent1),var(--accent2));
+  transition:width .35s ease;
+}
+.stepLabelRow {
+  display:flex;justify-content:space-between;
+  font-size:13px;margin-top:8px;
+}
+
+
+/* ===========================================================
+   MAIN SPLIT LAYOUT
+=========================================================== */
+.main {
+  flex:1;
+  display:flex;
+  gap:28px;
+  margin-top:22px;
+}
+
+/* LEFT COL = FORMS */
+.left {
+  flex:1.3;
+  background:rgba(255,255,255,0.03);
+  padding:22px;
+  border-radius:20px;
+  overflow:auto;
+}
+
+/* RIGHT COL = LIVE SCORES */
+.right {
+  width:380px;
+  display:flex;flex-direction:column;
+  gap:20px;
+}
+
+/* Each step only shows when active */
+.step { display:none;flex-direction:column;gap:16px; }
+.step.active { display:flex; }
+
+
+/* ===========================================================
+   INPUTS + TEXTAREAS
+=========================================================== */
+input,textarea {
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:var(--glass);
+  color:white;
+  font-size:15px;
+  outline:none;
+}
+
+/* ===========================================================
+   RADIO OPTIONS
+   Clean soft-pill style choices
+=========================================================== */
+.radioGroup { display:flex;flex-wrap:wrap;gap:10px;padding-top:10px; }
+
+.radio {
+  padding:10px 16px;
+  background:rgba(255,255,255,0.07);
+  border-radius:14px;
+  cursor:pointer;
+  font-size:14.5px;
+}
+.radio.selected {
+  background:linear-gradient(95deg,#54d0f7,#8eefff);
+  color:#003248;
+  font-weight:600;
+}
+
+
+/* ===========================================================
+   RIGHT PANEL — SCORE CARDS
+=========================================================== */
+.panelTitle { font-size:14px;font-weight:600; }
+
+.panelCard {
+  padding:18px;
+  border-radius:18px;
+  background:rgba(255,255,255,0.06);
+  backdrop-filter:blur(16px);
+  display:flex;flex-direction:column;
+  gap:8px;
+}
+
+.scoreBig {
+  font-size:36px;
+  font-weight:800;
+}
+
+
+/* ===========================================================
+   BUTTONS
+=========================================================== */
+.controls { display:flex;gap:12px;margin-top:10px; }
+.btn {
+  flex:1;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(95deg,#5dd8ff,#8ceaff);
+  color:#00384f;
+  font-weight:600;
+  cursor:pointer;
+}
+.btn.ghost {
+  background:rgba(255,255,255,0.05);
+  color:white;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+
+/* ===========================================================
+   SUMMARY BOX
+=========================================================== */
+.compassion {
+  background:rgba(255,255,255,0.12);
+  padding:18px;
+  border-radius:16px;
+  line-height:1.6;
+}
+
+</style>
+</head>
+
+<body>
+<div class="phone">
+
+  <!-- ======================================================
+       HEADER SECTION
+       Shows the app title & context.
+  ======================================================= -->
+  <div class="header">
+    <div class="logo">V</div>
+    <div class="title">
+      <h1>Emotional Safety Engine</h1>
+      <p>Gentle psychological scoring.</p>
+    </div>
+  </div>
+
+
+  <!-- ======================================================
+       PROGRESS BAR
+  ======================================================= -->
+  <div class="progressWrap">
+    <div class="progress"><div class="bar" id="progressBar"></div></div>
+    <div class="stepLabelRow">
+      <span>Step <span id="stepNum">1</span> of 5</span>
+      <span id="progressPercent">0%</span>
+    </div>
+  </div>
+
+
+  <!-- ======================================================
+       MAIN 2-COLUMN LAYOUT
+  ======================================================= -->
+  <div class="main">
+
+
+    <!-- ======================================================
+         LEFT COLUMN — FORM STEPS
+    ======================================================= -->
+    <div class="left">
+
+      <!-- STEP 1 — Name -->
+      <div class="step active" id="step-1">
+        <label>Your Name</label>
+        <input id="name" placeholder="e.g., Veda" />
+
+        <div class="controls">
+          <button class="btn ghost" id="skipName">Skip</button>
+          <button class="btn" id="next1">Next</button>
+        </div>
+      </div>
+
+
+      <!-- STEP 2 — Q1 -->
+      <div class="step" id="step-2">
+        <label>1) How do you feel when someone doesn't reply for 24+ hours?</label>
+
+        <div class="radioGroup" id="q1Options">
+          <div class="radio" data-value="Anxious">Anxious</div>
+          <div class="radio" data-value="Angry">Angry</div>
+          <div class="radio" data-value="Indifferent">Indifferent</div>
+          <div class="radio" data-value="Sad">Sad</div>
+          <div class="radio" data-value="Confused">Confused</div>
+        </div>
+
+        <!-- auto-generated follow-up -->
+        <div id="q1Follow"></div>
+
+        <div class="controls">
+          <button class="btn ghost" id="back2">Back</button>
+          <button class="btn" id="next2">Next</button>
+        </div>
+      </div>
+
+
+      <!-- STEP 3 — Q2 -->
+      <div class="step" id="step-3">
+        <label>2) Have you ever stayed longer than you should have?</label>
+
+        <div class="radioGroup" id="q2Options">
+          <div class="radio" data-value="Yes">Yes</div>
+          <div class="radio" data-value="No">No</div>
+        </div>
+
+        <!-- reason appears only if "Yes" is chosen -->
+        <div id="q2ReasonWrap" style="display:none;">
+          <label>What kept you there?</label>
+          <textarea id="q2reason"></textarea>
+        </div>
+
+        <div class="controls">
+          <button class="btn ghost" id="back3">Back</button>
+          <button class="btn" id="next3">Next</button>
+        </div>
+      </div>
+
+
+      <!-- STEP 4 — Fear + Analysis -->
+      <div class="step" id="step-4">
+        <label>3) Your biggest fear in dating?</label>
+        <textarea id="q3fear"
+          minlength="20"
+          placeholder="Write at least 20 characters..."></textarea>
+
+        <div class="controls">
+          <button class="btn ghost" id="back4">Back</button>
+          <button class="btn" id="next4">Analyze</button>
+        </div>
+      </div>
+
+
+      <!-- STEP 5 — Summary -->
+      <div class="step" id="step-5">
+        <label>Summary</label>
+        <div class="compassion" id="summaryText">Processing…</div>
+
+        <div class="controls">
+          <button class="btn ghost" id="back5">Back</button>
+          <button class="btn" id="finishBtn">Finish</button>
+        </div>
+      </div>
+
+    </div> <!-- END LEFT -->
+
+
+    <!-- ======================================================
+         RIGHT COLUMN — LIVE PSYCHOLOGICAL SCORES
+    ======================================================= -->
+    <div class="right">
+
+      <div>
+        <div class="panelTitle">Emotional Safety Score</div>
+        <div class="panelCard">
+          <div class="scoreBig" id="safetyScore">--</div>
+          <span id="scoreBracket"></span>
+        </div>
+      </div>
+
+      <div>
+        <div class="panelTitle">Tone Score</div>
+        <div class="panelCard"><div class="scoreBig" id="toneScore">--</div></div>
+      </div>
+
+      <div>
+        <div class="panelTitle">Confidence</div>
+        <div class="panelCard"><div class="scoreBig" id="confidenceScoreBox">--</div></div>
+      </div>
+
+      <div>
+        <div class="panelTitle">Clarity</div>
+        <div class="panelCard"><div class="scoreBig" id="clarityScoreBox">--</div></div>
+      </div>
+
+    
+    </div> <!-- END RIGHT -->
+
+  </div> <!-- END MAIN -->
+
+</div> <!-- END PHONE -->
+
+
+<!-- ===========================================================
+     JAVASCRIPT — LOGIC + WEIGHTED PSYCHOLOGY ENGINE
+=========================================================== -->
+<script>
+
+let currentStep = 0;
+let completed = false;
+
+const state = {
+  name:"",
+  q1:null,
+  q1Follow:null,
+  q2:null,
+  q2reason:"",
+  q3fear:"",
+  toneScore:0,
+  confidenceScore:0,
+  clarityScore:0,
+  vulnerabilityScore:0,
+  safetyScore:0
+};
+
+const steps = ["step-1","step-2","step-3","step-4","step-5"]
+  .map(id => document.getElementById(id));
+
+/* -------------------------
+      UPDATE PROGRESS
+--------------------------- */
+function updateProgress(n){
+  let pct = completed ? 100 : Math.round((n)/(steps.length-1)*100);
+
+  const bar = document.getElementById("progressBar");
+  const percent = document.getElementById("progressPercent");
+  const stepNum = document.getElementById("stepNum");
+
+  bar.style.width = pct + "%";
+
+  if (completed) {
+    percent.textContent = "🐬 100%";
+    stepNum.textContent = "5";
+  } else {
+    percent.textContent = pct + "%";
+    stepNum.textContent = n + 1;
+  }
+}
+
+/* -------------------------
+          SHOW STEP
+--------------------------- */
+function showStep(n){
+  steps.forEach(s => s.classList.remove("active"));
+  steps[n].classList.add("active");
+  currentStep = n;
+  updateProgress(n);
+}
+
+/* -------------------------
+        STEP 1
+--------------------------- */
+document.getElementById("next1").onclick = ()=>{
+  state.name = document.getElementById("name").value.trim() || "Friend";
+  showStep(1);   // ✅ FIXED
+};
+
+document.getElementById("skipName").onclick = ()=>{
+  state.name = "Friend";
+  showStep(1);
+};
+
+/* -------------------------
+        STEP 2
+--------------------------- */
+const q1Options = document.getElementById("q1Options");
+
+q1Options.onclick = e=>{
+  const el = e.target.closest(".radio");
+  if(!el) return;
+
+  q1Options.querySelectorAll(".radio").forEach(r=>r.classList.remove("selected"));
+  el.classList.add("selected");
+  state.q1 = el.dataset.value;
+
+  renderQ1Follow(state.q1);
+};
+
+function renderQ1Follow(val){
+  const wrap = document.getElementById("q1Follow");
+  wrap.innerHTML = "";
+
+  let label="", options="";
+
+  const yesno = id=>`
+    <div class="radioGroup" id="${id}">
+      <div class="radio" data-value="Yes">Yes</div>
+      <div class="radio" data-value="No">No</div>
+    </div>`;
+
+  const multi = (arr,id)=>`
+    <div class="radioGroup" id="${id}">
+      ${arr.map(v=>`<div class="radio" data-value="${v}">${v}</div>`).join("")}
+    </div>`;
+
+  if(val==="Anxious"){ label="Do you often worry what others think?"; options=yesno("q1f"); }
+  if(val==="Angry"){ label="When hurt, do you withdraw or confront?"; options=multi(["Withdraw","Confront","Both"],"q1f"); }
+  if(val==="Indifferent"){ label="Is it easy to let go of people?"; options=yesno("q1f"); }
+  if(val==="Sad"){ label="Do you blame yourself when things go wrong?"; options=yesno("q1f"); }
+  if(val==="Confused"){ label="Do you feel unsure how others feel?"; options=yesno("q1f"); }
+
+  wrap.innerHTML = `<label>${label}</label>${options}`;
+
+  wrap.querySelectorAll(".radio").forEach(r=>{
+    r.onclick=()=>{
+      wrap.querySelectorAll(".radio").forEach(x=>x.classList.remove("selected"));
+      r.classList.add("selected");
+      state.q1Follow = r.dataset.value;
+    };
+  });
+}
+
+document.getElementById("back2").onclick = ()=> showStep(0);
+document.getElementById("next2").onclick = ()=>{
+  if(!state.q1) return alert("Choose an option.");
+  if(!state.q1Follow) return alert("Answer follow-up.");
+  showStep(2);
+};
+
+/* -------------------------
+        STEP 3
+--------------------------- */
+const q2Options = document.getElementById("q2Options");
+
+q2Options.onclick = e=>{
+  const el = e.target.closest(".radio");
+  if(!el) return;
+
+  q2Options.querySelectorAll(".radio").forEach(r=>r.classList.remove("selected"));
+  el.classList.add("selected");
+
+  state.q2 = el.dataset.value;
+  document.getElementById("q2ReasonWrap").style.display =
+    (state.q2==="Yes" ? "block" : "none");
+};
+
+document.getElementById("back3").onclick = ()=> showStep(1);
+
+document.getElementById("next3").onclick = ()=>{
+  if(!state.q2) return alert("Select Yes or No.");
+
+  if(state.q2==="Yes"){
+    let tx = document.getElementById("q2reason").value.trim();
+    if(!tx) return alert("Please write your reason.");
+    state.q2reason = tx;
+  }
+
+  showStep(3);
+};
+
+/* -------------------------
+        STEP 4
+--------------------------- */
+document.getElementById("back4").onclick = ()=> showStep(2);
+
+document.getElementById("next4").onclick = ()=>{
+  let fear = document.getElementById("q3fear").value.trim();
+  if(fear.length < 20) return alert("Minimum 20 characters.");
+
+  state.q3fear = fear;
+
+  runWeightedEngine();
+  calculateSafetyScore();
+  renderSummary();
+
+  completed = true;       // ⭐
+  updateProgress(4);      // ⭐
+
+  showStep(4);            // final
+};
+
+/* -------------------------
+        STEP 5
+--------------------------- */
+document.getElementById("back5").onclick = ()=> showStep(3);
+document.getElementById("finishBtn").onclick = ()=> alert("Saved locally!");
+
+/* -------------------------
+        ENGINE + SCORE
+--------------------------- */
+function runWeightedEngine(){
+  const text = (state.q3fear + " " + state.q2reason).toLowerCase();
+
+  let tone=50, conf=50, clarity=70, vuln=0;
+
+  const warmWords  = ["love","safe","warm","supported","valued"];
+  const harshWords = ["hate","angry","ignored","abandoned","rejected"];
+  const fearWords  = ["scared","worried","afraid","fear","anxious"];
+  const clarityBad = ["idk","maybe","kinda","sorta","literally","basically"];
+
+  warmWords.forEach(w=>{ if(text.includes(w)) tone+=4; });
+  harshWords.forEach(w=>{ if(text.includes(w)) tone-=6; });
+  fearWords.forEach(w=>{ if(text.includes(w)) tone-=4; });
+  clarityBad.forEach(w=>{ if(text.includes(w)) clarity-=3; });
+
+  const confidentPhrases=["i know","i want","i will","i choose","i decide"];
+  const hesitantPhrases=["i guess","not sure","idk","maybe"];
+
+  confidentPhrases.forEach(p=>{ if(text.includes(p)) conf+=6; });
+  hesitantPhrases.forEach(p=>{ if(text.includes(p)) conf-=6; });
+
+  const vulnKeys=["i feel","i fear","i worry","im scared","im hurt"];
+  vulnKeys.forEach(k=>{ if(text.includes(k)) vuln+=12; });
+
+  state.toneScore = Math.max(0,Math.min(100,tone));
+  state.confidenceScore = conf;
+  state.clarityScore = clarity;
+  state.vulnerabilityScore = vuln;
+
+  document.getElementById("toneScore").innerText = state.toneScore;
+  document.getElementById("confidenceScoreBox").innerText = conf;
+  document.getElementById("clarityScoreBox").innerText = clarity;
+}
+
+function calculateSafetyScore(){
+  let score = 100;
+
+  const emotionalWeights = {
+    "Anxious": -30, "Angry": -15, "Indifferent": -5,
+    "Sad": -20, "Confused": -12
+  };
+
+  score += emotionalWeights[state.q1] || 0;
+
+  if(state.q1Follow==="Yes") score -=10;
+  if(state.q1Follow==="No") score +=8;
+  if(state.q1Follow==="Withdraw") score -=8;
+  if(state.q1Follow==="Confront") score -=3;
+  if(state.q1Follow==="Both") score -=5;
+
+  if(state.q2==="Yes"){
+    let reason = state.q2reason.toLowerCase();
+    if(reason.includes("fear") || reason.includes("alone") || reason.includes("abandon"))
+      score -=25;
+    else if(reason.includes("lonely"))
+      score -=15;
+    else if(reason.includes("guilt"))
+      score -=10;
+    else score -=5;
+  } else score +=5;
+
+  score += Math.round((state.toneScore - 50)/4);
+
+  if(state.q3fear.length > 80) score +=4;
+  else if(state.q3fear.length > 40) score +=2;
+
+  state.safetyScore = Math.max(0,Math.min(100,score));
+
+  document.getElementById("safetyScore").innerText = state.safetyScore;
+  document.getElementById("scoreBracket").innerText =
+    state.safetyScore>=75 ? "High" :
+    state.safetyScore>=40 ? "Moderate" : "Low";
+}
+
+function renderSummary(){
+  let s=state.safetyScore, name=state.name;
+
+  let summary = s>=75
+    ? `${name}, your emotional awareness looks healthy and grounded.`
+    : s>=40
+      ? `${name}, you're balancing strength with some emotional weight.`
+      : `Thank you for opening up, ${name}.`;
+
+  let guide = s>=75
+    ? `You show regulation, clarity and self-reflection.`
+    : s>=40
+      ? `This mix is normal. Improving clarity & gentle communication helps.`
+      : `Your emotions deserve care. Start with one small boundary.`;
+
+  document.getElementById("summaryText").innerHTML =
+    `<strong>${summary}</strong><br><br>${guide}`;
+}
+
+/* ⭐ START APP CORRECTLY */
+showStep(0);
+
+</script>
+
+
+</body>
+</html>
