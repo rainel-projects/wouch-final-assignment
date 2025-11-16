@@ -1,3 +1,7 @@
+
+<img width="1919" height="1016" alt="image" src="https://github.com/user-attachments/assets/a59ea1e2-c049-4fb1-89a0-8ddc1f8f90df" />
+
+
 Emotional Safety Engine — Weighted Psychology Model
 
 Live Demo → https://rainel-projects.github.io/wouch-final-assignment/
